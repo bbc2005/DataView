@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh">
+    <head>
+        <meta charset="utf-8">
+        <title>Echarts-DataViewTableDemo</title>         
+     
+        <link rel="stylesheet" href="css/handsontable.css">
+        <script src="js/jquery-2.1.0.min.js" type="text/javascript" ></script>
+     
+        <script src="js/handsontable.min.js"></script>
+        <script src="js/layer/layer.js"></script>       
+        <script src="js/dateUtil.js"></script>
+    </head>
+
+<body>
+    <div id="table" style="width:100%;height:420px;overflow: hidden;"></div>
+    <div class="layui-layer-btn layui-layer-btn-" style="margin:0;">    
+        <a id="downloadbtn" class="layui-layer-btn0" download="myexcel.xls" style="font-size:14px;" data-from="">下载</a>
+        <a id="closebtn" class="layui-layer-btn0" style="font-size:14px;" >关闭</a> 
+    </div>
+    
+   
+    <script type="text/javascript">        
+        var $_GET = (function(){
+            var url = window.document.location.href.toString();
+            url=decodeURI(url);
+        //            console.log(url);
+            var u = url.split("?");
+            if(typeof(u[1]) == "string"){
+        //                console.log(u[1]);
+                u = u[1].split("&");
+                var get = {};
+                for(var i in u){
+                    var j = u[i].split("=");
+        //                    console.log(j[0]+'--->'+j[1]);
+                    get[j[0]] = j[1];
+                }
+                return get;
+            } else {
+                return {};
+            }
+        })();
+        
+        var title=$_GET['title'] || '可视化监控';
+        var formData=$_GET['formData'];
+        var tableDataStr=localStorage.getItem(formData);      
+        var tableData=jQuery.parseJSON(tableDataStr);
+        $('#downloadbtn').attr('data-from',formData);
+
+        //加载层-风格2
+        layer.load(1);
+        var data=[];
+        data.push(["时间","当日面签人数","当日预约人数"]);
+
+        for (var i = 0; i < tableData.length; i++) {       
+//            console.log(tableData[i].name+'-->'+tableData[i].val1+'------->'+tableData[i].val2);
+            var names=tableData[i].name;
+            names=names.replace('/','年').replace('/','月')+'日';
+            data.push([names,tableData[i].val1,tableData[i].val2]);           
+        }
+        dataToExcel(data);
+       
+       //显示电子表格
+        function dataToExcel(data){
+          var table=document.getElementById('table');
+        //    console.log(data);
+          new Handsontable(table,{   
+                data:data,
+                colHeaders: true,
+                rowHeaders: true,
+                minCols:1,
+                minRows:1,
+                maxCols:200,
+                maxRows:200,
+                editor: false, // 禁用所有单元格编辑
+                colWidths: 150, // 设置所有列宽为150像素
+                contextMenu: false // 禁用右键菜单      
+            });   
+           layer.closeAll('loading'); //关闭加载层
+        }
+        
+       
+        //单击下载按钮
+        $('#downloadbtn').on('click', function(){            
+            var formData=$('#downloadbtn').attr('data-from');
+            var tableDataStr=localStorage.getItem(formData);            
+            var tableData=jQuery.parseJSON(tableDataStr);
+            var s='';
+            if(tableData==undefined || tableData==null){//没有本地缓存数据，读库取数据
+                layer.alert('没有相应的记录存在！');
+                return false;            
+            }else{//从本地读取
+                if('xinYiDaiFangKuanRiBaoBiaoDetail'==formData || 'quanBuChanPinFangKuanRiBaoBiaoDetail'==formData || 'shuangTongFangKuanRiBaoBiaoDetail'==formData || 'anJieFangKuanRiBaoBiaoDetail'==formData || 'zhaiYiTongFangKuanRiBaoBiaoDetail'==formData ){
+                   s=downloadGraph(tableData);
+                }else if('xinYiDaiFangKuanYueBaoBiaoDetail'==formData || 'quanBuChanPinFangKuanYueBaoBiaoDetail'==formData || 'shuangTongFangKuanYueBaoBiaoDetail'==formData || 'anJieFangKuanYueBaoBiaoDetail'==formData || 'zhaiYiTongFangKuanYueBaoBiaoDetail'==formData ){                                      s=downloadMonthGraph(tableData);
+                }else{
+                    var data=[];
+                    data.push(["时间","当日面签人数","当日预约人数"]);
+                    
+                    for (var i = 0; i < tableData.length; i++) {
+            //            console.log(tableData[i]);
+    //                    console.log(tableData[i].name+'-->'+tableData[i].val1+'------->'+tableData[i].val2);
+                        var name=tableData[i].name;
+                        name=name.replace('/','年').replace('/','月')+'日';
+                        data.push([name,tableData[i].val1,tableData[i].val2]); 
+                    }
+                    var str='<tbody>';
+                    for(var i=0;i<data.length;i++){
+                        var x=data[i]
+                        str+='<tr>';
+                        for(var j=0;j<x.length;j++){
+                            str+='<td>';
+                            str+=x[j];
+                            str+='</td>';
+                        }
+                        str+='</tr>';
+                    }
+                    str+='</tbody>';
+                    str= str.replace(new RegExp("undefined","gm"),""); 
+                //        console.log(s);
+                    s=tableToExcelFormat(str,'可视化监控');
+                }
+                 
+                $(this).attr('href', s);
+                var timeStr =dateUtil.dateToStr('yyyyMMddhhmmss',new Date());
+                $(this).attr('download', title + timeStr + '.xls');
+            }
+        });
+        
+         //单击关闭按钮
+        $('#closebtn').on('click', function(){ 
+            var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引           
+            parent.layer.close(index); //再执行关闭        
+        });
+        
+        /**
+        *格式化成Excel
+        *
+        */
+        var tableToExcelFormat = (function () {                      
+            var uri = 'data:application/vnd.ms-excel;base64,',
+            template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table>{table}</table></body></html>',
+              base64 = function (s) { return window.btoa(unescape(encodeURIComponent(s))) },
+              format = function (s, c) {
+                  return s.replace(/{(\w+)}/g,
+                  function (m, p) { return c[p]; })
+              }
+
+            return function (s, name) {  
+                var txt=s;
+                var ctx = { worksheet: name || 'Worksheet', table:txt  };
+                return uri + base64(format(template, ctx));
+            }
+        })();  
+    </script>
+  </body>
+</html>

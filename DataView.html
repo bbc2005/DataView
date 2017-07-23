@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>Echarts-DataViewTableDemo</title>
+   
+    <script src="js/jquery-2.1.0.min.js"></script>
+    <script src="js/echarts.js"></script>
+    <script src="js/handsontable.min.js"></script>
+    <script src="js/layer/layer.js"></script>
+    <script src="js/dateUtil.js"></script>
+</head>
+<body>
+
+    <div id="main" style="width:1100px;height:400px;margin-left: auto;
+    margin-right: auto;"></div>                
+  
+</body>
+<script>
+
+// 基于准备好的dom，初始化echarts实例
+var line = echarts.init(document.getElementById('main'));
+line.showLoading();
+line.setOption({ 
+    backgroundColor:'#39314a',
+    color: ['#ff5367','#fda866'],
+    title: [{
+        text: '预约日报表',
+        left: '10%',
+        textStyle: {
+            color: '#ffffff',
+            fontSize:14
+        }
+     }], 
+    tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+            type: 'cross'
+        }
+    },
+    //审批量轴位置
+    grid: {
+        top:'25%',
+        left:'10%',
+        right: '15%',
+        bottom:'10%'
+    },
+    //坐标外的带横线的位置及数据
+    legend: {
+        orient:'vertical',
+        top:'middle',
+        right:'3%',
+        textStyle:{ 
+            color: '#ddd',
+            fontSize:12
+        },
+        itemGap:20,
+        data:['当日预约人数','当日实到人数']
+    },
+    toolbox: {
+        show: true,
+        feature: {
+           /* dataZoom: {
+                yAxisIndex: 'none'
+            },*/
+            dataView: {
+                lang: ['预约日报表', '关闭', '下载'],
+                readOnly: false,
+                backgroundColor:'#39314a',
+                textColor:'#fff',
+                optionToContent: function(opt) {
+                    var otc='graph.html?formData=yuYueData&title=预约日报表';
+                    return otc;                
+                }
+            },
+            magicType: {type: ['line', 'bar']},
+            restore: {},
+            saveAsImage: {}
+        }
+    },
+    xAxis: [
+        {
+            type: 'category', 
+            axisPointer: {//x轴提示格式化
+                label: {
+                    backgroundColor:'#0a0000'                  
+                }
+            },            
+            axisLine: {//坐标轴轴线相关设置
+                show: false,
+                lineStyle: {
+                    color: '#ddd'
+                }
+            },
+            axisTick: {//坐标轴刻度相关设置
+                alignWithLabel: true,
+                show: false,
+            },
+            axisLabel: {//坐标轴刻度标签的相关设置
+                textStyle: {
+                    color: '#ddd'
+                }
+            },           
+            data:[]
+        }
+    ],
+    yAxis: [       
+        {
+            type: 'value',
+            name: '人数',
+            position: 'left',
+            axisPointer: {//y轴提示格式化
+                label: {
+                    backgroundColor:'#0a0000',
+                    formatter: function (params) {  
+                        return Math.round(params.value);
+                    }
+                }
+            },
+            splitLine: {//坐标轴在 grid 区域中的分隔线
+                show: true,
+                lineStyle: {
+                    color: 'rgba(255, 255, 255, 0.13)'
+                }
+            },
+            axisLine: {
+                show: false,
+                lineStyle: {
+                    color: '#ddd'
+                }
+            },
+            axisTick:{//坐标轴刻度相关设置
+                show: false,
+            },
+            axisLabel: {
+                formatter: '{value}'
+            }
+        }
+    ],
+    series: [
+        {
+            name:'当日预约人数',
+            type:'line',
+            data:[]
+        },
+        {
+            name:'当日实到人数',
+            type:'line',         
+            data:[]
+        }
+    ]
+});
+
+  window.onresize = function() {
+      line.resize();
+  }    
+
+
+
+//向坐标系填充数据
+function dataToLine(line,data){
+
+    line.hideLoading();
+    // 填入数据
+    line.setOption({
+         xAxis: {                          
+            data: data.categoryData
+        },
+        series: [
+            {
+                name:'当日预约人数',
+                type:'line',
+                data:data.val1
+            },
+            {
+                name:'当日实到人数',
+                type:'line',
+                data:data.val2
+            }
+            ]
+    });
+  
+};
+
+
+function loading(){
+    var lineData=[];
+    var dateStr=dateUtil.format(new Date());
+    var len=15;
+    var time=[];
+    for (var i = 0; i < len; i++) {
+        var name=dateUtil.adjacentDate(dateStr,-(len-i)); 
+        var val=Math.floor(Math.random()*100+500);
+        lineData.push( {"name":name.substring(5),"val1":val,"val2":val-(Math.floor(Math.random()*500))} );
+    } 
+    
+  
+    localStorage.setItem("yuYueData",JSON.stringify(lineData));
+    
+    splitData(lineData);
+    
+}
+
+function splitData(lineData){    
+    var categoryData=[],val1=[],val2=[];
+    for(var i=0;i<lineData.length;i++){
+        var  po=lineData[i];
+        categoryData.push(po.name);
+        val1.push(po.val1);
+        val2.push(po.val2);
+    }
+    var data={
+        "categoryData":categoryData,
+        "val1":val1,
+        "val2":val2
+    }
+   dataToLine(line,data); 
+}
+
+setTimeout(loading(),5000);
+
+</script>
+</html>
