@@ -20,6 +20,7 @@
 # Echarts.js源码修改的地方
 
 在3.6.2源码73097行：
+```html
  if (typeof optionToContent === 'function') {
 	var htmlOrDom = optionToContent(api.getOption());
 	if (typeof htmlOrDom === 'string') {
@@ -29,7 +30,9 @@
 		viewMain.appendChild(htmlOrDom);
 	}
 }
+```
 改为如下：
+```html
 if (typeof optionToContent === 'function') {
    /* var htmlOrDom = optionToContent(api.getOption());
 	if (typeof htmlOrDom === 'string') {
@@ -52,10 +55,12 @@ if (typeof optionToContent === 'function') {
 	layer.full(index);
 	return ;
 }
+```
 
 # Echarts实例option设置
 
 在Echarts实例中设置option的toolbox如下：
+```html
 toolbox: {
 	show: true,
 	feature: {
@@ -77,3 +82,4 @@ toolbox: {
 		saveAsImage: {}
 	}
 }
+```
