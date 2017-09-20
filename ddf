@@ -1,0 +1,625 @@
+51 公积金
+1 接入网址说明
+1.1 协议说明
+只支持https
+1.2 域名说明
+ 
+名称	域名
+API	https://t.51gjj.com/
+
+ 
+2 获取公积金城市基础配置项
+请求URL：
+•	gjjapi/getCity
+________________________________________
+请求方式：
+•	Method: GET
+________________________________________
+参数： 无
+{ "msg": null, "code": 0, "data": [ { "provinceName": "浙江省", "citys": [ { "queryStepParam": [ { "loginParam": [ { "note": "", "name": "customerId", "type": "string" }, { "note": "", "name": "password", "type": "string" }, { "note": "", "name": "code", "type": "string" } ] }, { "loginParam": [ { "note": "", "name": "userName", "type": "string" }, { "note": "", "name": "password", "type": "string" }, { "note": "", "name": "code", "type": "string" } ] }, { "loginParam": [ { "note": "", "name": "email", "type": "string" }, { "note": "", "name": "password", "type": "string" }, { "note": "", "name": "code", "type": "string" } ] } ], "name": "杭州", "id": 3, "state": 1, "provinceId": 1 }, { "queryStepParam": [ { "loginParam": [ { "note": "请输入18位身份证号码，15位身份证用户请持本人身份证至公积金窗口更改并重置密码", "name": "ID", "type": "string" }, { "note": "", "name": "gjjAccount", "type": "string" }, { "note": "初始密码为身份证后6位，字母用*代替", "name": "password", "type": "string" }, { "note": "", "name": "code", "type": "string" } ] } ], "name": "湖州", "id": 19, "state": 1, "provinceId": 1 } ] }, { "provinceName": "重庆市", "citys": [ { "queryStepParam": [ { "loginParam": [ { "note": "", "name": "userName", "type": "string" }, { "note": "", "name": "password", "type": "string" }, { "note": "", "name": "code", "type": "string" } ] } ], "name": "重庆", "id": 356, "state": 1, "provinceId": 2 } ] } ] }
+返回参数说明
+参数名	类型	说明
+msg	String	错误信息
+code	Number	状态码
+data	json字符串	城市数据信息(详细见附录)
+3 获取访问令牌
+请求URL：
+•	gjjapi/getToken
+________________________________________
+请求方式：
+•	Method: POST
+•	Content-Type: application/json
+•	Charset: UTF-8
+________________________________________
+参数：
+参数名	必选	类型	说明
+sign	是	String	签名
+appKey	是	String	公钥
+timestamp	是	String	时间戳 （单位：ms）
+ 
+________________________________________
+请求示例
+{ "sign":"SDSKKL5KJJKLL6JK1L", "params":{ "appKey":"3FD179425381644F95424B66BE06E3E4", "timestamp":"1494828184314" } }
+返回示例1
+{ "code": 0, "data": { "token": "cd4283827366490eb037bf1b4b28dadc" } }
+返回示例2
+{ "code": 101, "msg": "参数错误" }
+返回参数说明
+参数名	类型	说明
+token	String	访问令牌(Token的有效期为2小时，当Token未失效时调用该接口，则返回新的Token，有效期重新计算，老的Token同时失效)
+code	Number	状态码
+msg	String	错误信息
+ 
+________________________________________
+备注
+状态码对应的错误信息
+•	0 -> 成功
+•	-1 -> 系统异常
+•	101 -> 参数错误
+•	102 -> 时间戳超时
+•	103 -> 无效的appKey
+•	104 -> 签名错误
+4 获取订单号
+简要描述：
+•	通过该接口获取订单号 订单号是查询任务和获取数据的唯一标识，请妥善保管，每次任务对应一个订单号
+请求URL：
+•	path gjjapi/getOrderSn
+请求方式：
+•	Method: POST
+•	Content-Type: application/json
+•	Charset: UTF-8
+参数：
+参数名	必选	类型	说明
+sign	是	string	签名
+appKey	是	string	公钥
+token	是	string	访问令牌
+timestamp	是	string	时间戳 （单位：ms）
+cityId	是	string	城市编号
+name	否	string	反欺诈姓名
+ID	否	string	反欺诈身份证
+phone	否	string	反欺诈认证手机号
+请求示例 需要反欺诈信息
+{ "signParams": { "params": { "appKey": "3FD179425381644F95424B66BE06E3E4", "token": "cd4283827366490eb037bf1b4b28dadc", "timestamp": "1504828184314" }, "sign": "SDSKKL5KJJKLL6JK1L", }, "cityId": "323", "fraudParams": { "name": "王建", "ID": "3452124199704211279", "phone": "15658153695" } }
+不需要反欺诈信息
+{ "signParams": { "params": { "appKey": "3FD179425381644F95424B66BE06E3E4", "token": "cd4283827366490eb037bf1b4b28dadc", "timestamp": "1504828184314" }, "sign": "SDSKKL5KJJKLL6JK1L", }, "cityId": "323" }
+返回示例1
+{ "code": 0, "orderSn": "e7b7040b-8ea1-4585-95cc-977925d24757", "msg": "任务创建成功" }
+返回示例2
+{ "code": 101, "msg": "参数错误" }
+返回参数说明
+参数名	类型	说明
+orderSn	String	订单号
+code	Number	状态码
+msg	String	任务信息
+备注
+状态码对应的错误信息
+•	0 -> 成功
+•	-1 -> 系统异常
+•	101 -> 参数错误
+•	102 -> 时间戳超时
+•	103 -> 无效的token 或 城市id不能为空
+•	104 -> token已失效
+•	105 -> 无效的appKey
+•	106 -> 签名错误
+5 获取验证码
+简要描述：
+•	获取当前公积金查询任务需要的验证码信息(即附录9.2所示的查询参数为phoneCode或code时候可调用该接口)
+请求URL：
+•	gjjapi/getCode
+请求方式：
+•	POST
+•	Content-Type = application/json
+参数：
+参数名	必选	类型	说明
+orderSn	是	string	公积金查询订单号
+type	是	string	验证码类型 code:图形验证码 phone_code:手机验证码
+请求示例
+{ "orderSn":"1199a04a-d203-4d3d-b65b-0c07ce5fd9f7", "type":"code" }
+返回示例
+•	type=code
+{ "code": 0, "data": { "img": "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", "cityId": 12, "orderSn": "1199a04a-d203-4d3d-b65b-0c07ce5fd9f7" } }
+•	type=phone_code
+{ "msg":"对不起，查询短信随机码暂时不能发送，请一分钟以后再试", "code":106, "data":{ "cityId":2, "orderSn": "1199a04a-d203-4d3d-b65b-0c07ce5fd9f7" } }
+返回参数说明
+参数名	类型	说明
+code	int	错误码
+orderSn	int	公积金查询任务订单号
+cityId	int	城市ID
+img	String	图片base64编码格式,不包含头信息
+msg	string	错误信息
+备注
+•	更多返回错误代码请看首页的错误代码描述
+code=106 msg 如下： 公积金查询任务不存在 城市维护或不支持 输入参数不合法
+code=-1 msg:服务器错误
+6 提交任务查询参数
+简要描述：
+•	查询公积金任务
+请求URL：
+•	gjjapi/query
+请求方式：
+•	POST
+•	Content-Type = application/json
+参数：
+参数名	必选	类型	说明
+orderSn	是	string	公积金查询任务订单号
+|params|是|json string|当前查询任务需要的参数 如：{“phone”:1111,”code”:1111}
+请求示例
+{ "orderSn":"7d7cf6f8-8104-4660-bd8c-ec3a93026fg6", "params":{ "ID":"41302619841025456X", "password":"123" } }
+返回示例
+{ "msg":null, "code":0, "data":{ "cityId":12, "orderSn":"7d7cf6f8-8104-4660-bd8c-ec3a93026fg6" } }
+返回参数说明
+参数名	类型	说明
+code	int	错误码
+orderSn	string	公积金查询订单号
+cityId	int	城市ID
+msg	string	错误信息
+备注
+•	更多返回错误代码请看首页的错误代码描述
+code=106 msg 如下： 城市id,回调地址,参数不能为空 公积金查询任务不存在 当前任务执行失败 参数跟当前城市配置不一致
+code=105: msg= 公积金任务正在执行中
+code=107 msg 如下: 如果当前城市配置为志愿者： 谢谢您的参与 如果当前城市不支持查询提示信息： 很抱歉，该城市目前还不支持查询
+code=-1 msg:服务器错误
+7 查询任务结果
+简要描述：
+•	查询公积金任务
+请求URL：
+•	gjjapi/getData
+请求方式：
+•	POST
+•	Content-Type = application/json
+参数：
+参数名	必选	类型	说明
+orderSn	是	String	公积金查询任务订单号
+请求示例
+{ "sign":"89D89A1D07E875C649D6A2D01F8E650A", "params":{ "appKey": "88A03809137291F333BF2679AB85850E", "timestamp":"1494316515535", "token":"f63bbb7a1c1b497387597efda28a1e3c", "orderSn":"4243d640-146a-47d7-97b9-a03681fc9bf8" } }
+返回示例
+•	当前步骤执行成功，还需要执行下一步，loginParam为登录参数，
+{ "msg":null, "code":1, "data":{ "data":null, "loginParam":[{"note":"用户名指您在注册时自行设置的2-12位英文字母或数字（区分大小写）","name":"account","type":"string"},{"note":"","name":"password","type":"string"}], "cityId":12, "orderSn":"7d7cf6f8-8104-4660-bd8c-ec3a93026fg6" } }
+•	执行成功
+{ "code":0, "data":{ "gjj_data": [], "loan_data": [], "general_analyzed_data": {} }, "cityName":"杭州", "orderId":"158ddhkj-jlhlkmsd-4456465sads" } `
+•	执行失败
+{ "msg":"参数不正确", "code":102, "data":{ "data":null, "loginParam":null, "cityId":12, "orderSn":"7d7cf6f8-8104-4660-bd8c-ec3a93026fg6" } }
+返回参数说明
+参数名	类型	说明
+code	int	错误码
+orderSn	string	公积金查询任务订单号
+cityId	int	城市ID
+msg	string	错误信息
+data	string	数据
+loginParam	json Object	登录参数
+备注
+更多返回代码描述
+•	code=0 任务成功
+•	code=1 当前步骤执行成功，还需要执行下一步；
+•	code=-1 msg=服务器错误,公积金查询任务不存在，当前任务执行失败，请求参数跟当前城市配置不一致，
+•	code=105 msg= 该任务正在等待用户输入 该任务还未交模拟器处理，请稍后 当前任务正在处理中 当前步骤输入与配置不符
+8 回调通知
+8.1 通知参数
+请求方式：
+•	Method: POST
+•	Content-Type: application/json
+•	Charset: UTF-8
+参数：
+参数名	必选	类型	说明
+orderSn	是	String	公积金查询任务订单号
+8.2 通知示例
+比如，回调地址为https://your.url.com/your/server，那么我方异步回调通 知的请求类似：
+{ "orderSn":"7d7cf6f8-8104-4660-bd8c-ec3a93026fg6" }
+当成功收到回调通知后，页面应返回HttpStatus=200，并且返回以下内容：
+{ "code":0, "msg":"success" }
+之后，可通过查询任务结果 接口查询对应的信息和数据
+9 附录
+9.1 签名算法
+签名生成的通用步骤如下：
+第一步，设所有发送或者接收到的数据为集合M，将集合M内非空参数值的参数按照参数名ASCII码从小到大排序（字典序），使用URL键值对的格式（即key1=value1&key2=value2…）拼接成字符串stringA。
+特别注意以下重要规则：
+•	参数名ASCII码从小到大排序（字典序）；
+•	如果参数的值为空不参与签名；
+•	参数名区分大小写；
+第二步，在stringA最后拼接上appSecret得到stringSignTemp字符串，并对stringSignTemp进行MD5运算，再将得到的字符串所有字符转换为大写，得到sign值signValue。
+举例： 假设传送的参数如下：
+appKey : 88A03809137291F333BF2689AB85850E, orderSn : 426ea0df-7f1b-4491-8989-5c130291e892, timestamp : 1494649888152 token : 0eaeb00afcc4448da724d9179a50abe7
+第一步：对参数按照key=value的格式，并按照参数名ASCII字典序排序如下：
+stringA="appKey=092217B6B52ED02D46EFFFA7CFA20940&orderSn=3e993890-ff08-4af5-bb9b-04fda6dd2b78&timestamp=1494669826683&token=8731de2cd2604f4a856f210703541326";
+第二步：拼接API密钥：
+stringSignTemp=stringA+"&appSecret=192006250b4c09247ec02edce69f6a2d" sign=MD5(stringSignTemp).toUpperCase()="9A0A8659F005D6984697E2CA0A9CF3B7"
+9.2 城市配置结构解释
+参数名	类型	说明
+code	int	错误码
+msg	string	错误信息
+province	int	省份ID
+provinceName	string	省份名称
+id	int	城市ID
+name	string	城市名称
+queryStepParam	json array	城市查询公积金查询参数
+url	string	城市查询公积金URL
+state	int	城市状态 1 正常 -1 维护 2 钓鱼 0 不支持 3 志愿者
+{ "userName": "用户名", "name": "姓名", "password": "密码", "ID": "身份证号", "personalAccount": "个人账号", "gjjAccount": "公积金账号", "employeeNumber": "职工账号", "bankCard": "银行联名卡号", "bankID": "银行卡号", "card": "公积金联名卡号", "phoneCode": "手机验证码", "customerId": "客户号", "code": "验证码", "phone": "手机号码", "Email": "邮箱", "ICCard":"IC卡号", "companyName":"单位名称", "gjjHsNum":"公积金黄山卡号", "loanAccount":"贷款账号" }
+9.2 公积金数据结构
+总体结构
+- JSON键值对除了对象、数组以外，其余键值对的值的数据类型均为String
+- 如果需要获取反欺诈信息，需要传入用户身份证，姓名，手机号码
+{ "data":{ "gjj_data": [ { "gjj_brief" : {}, //公积金基本信息 "gjj_detail" : [ //公积金明细 {}, ... ], "gjj_account_analyzed_data" :{} //分析数据 }, ... ], "loan_data": [ { "loan_brief" : {}, //贷款基本信息 "loan_detail" : [ //贷款明细 {}, ... ] }, ... ], "general_analyzed_data": { "every_company_data": [ //历年公积金缴存情况 {}, ... ], //反欺诈三个数据结构 "overdueClassify": {}, //贷款逾期 "loanClassify": {}, //多头借贷 "blacklist": {} //黑名单 } } "cityName":"",// 城市名 "orderId":"158ddhkj-jlhlkmsd-4456465sads"//订单号 }
+详细结构
+{ "gjj_data" : [ { "gjj_brief" : { "ID" : "341204198812222218",//身份证 "name" : "王飞",//姓名 "card" : "",//联名卡号 "customer_id" : "", //客户号/职工账号/职工代码/公积金账号 "deposit_amount" : "1826", //月缴额 "fb_deposit_amount" : "", //房补月缴额 "balance" : "18425.91", //余额 "fb_balance" : "", //房补余额 "once_balance" : "", //一次性余额 "status" : "", //状态 "record_date" : "", //最后入账时间 "company" : "霍山人民检察院", //公司 "deposit_base" : "7608.33", //缴存基数 "person_rate" : "", //个人缴存比例 "company_rate" : "", //公司缴存比例 "init_date" : "", //开户时间 "start_date" : "", //开始缴交时间 "sex" : "", //性别 "email" : "", //电子邮箱 "phone" : "", //手机号码/联系电话 "marriage" : "", //婚姻状态 "address" : "", //住址/地址 "birthday" : "", //出生日期 "company_id" : "3001020", //单位账号/单位代码 "person_deposit_amount" : "", //个人月缴额 "company_deposit_amount" : "", //公司月缴额 "deposit_rate" : "", //缴存比例（合） }, "gjj_detail" : [ { "id" : "ff372f05-9ff6-471a-88ae-50ef80adc085", //GUID "gjj_type" : "0", //缴存类型，如果是公积金，为0，房补为1 "company" : "", //公司/单位 "order_id" : "", //缴存次序(目前不用):一个月里多条记录排序 "record_date" : "2017-04-12", //发生日期 "op_type" : "2017-04[1]汇缴", //类型 "record_month" : "201704", //缴存月份 "amount" : "1826.00", //发生额 "balance" : "18425.91", //余额 "remark" : "2017-04[1]汇缴", //摘要 "comments" : "", //缴存的备注 "deposit_type" : "", //缴存类型 "cont_flag" : -1, //连续缴纳标记（0为断缴后第一次缴纳，1为连续缴纳） "back_cont_flag" : -1 //连续（含补缴）（字段值意义同上） }, ...... ] "gjj_account_analyzed_data" : { "newest_account": 0, //最新公积金账号为1，其他为0 "cont_last_times" : -1, //最近连续缴存 "back_cont_last_times" : -1, //最近连续缴存（含补缴） "cont_max_times" : -1, //连续缴存最多次数 "back_cont_max_times" : -1,//连续缴存最多次数（含补缴） "sum_times" : -1, //总共缴存次数 "back_sum_times" : -1 //总共缴存次数（含补缴） } }, ....... ], "loan_data" : [ { "loan_brief" : { "name" : "王飞", //姓名 "ID" : "", //身份证 "con_no" : "", //合同号 "status" : "", //状态 "credit" : "320000.00", //贷款金额 "period" : "240", //期数 "rate" : "", //年利率 "warning_rate" : "", //罚息利率 "balance" : "295152.08", //剩余贷款金额 "fund" : "", //还款方式 "fund_date" : "", //还款日 "bank" : "", //委托银行 "phone" : "", //手机号码/联系电话 "address" : "", //地址 "start_date" : "2015-03-19", //贷款开始日期 "end_date" : "2035-03-19", //贷款结束日期 "record_date" : "2017-05-27", //最后入账时间 "due_amount" : "", //本月还款额 "pay_principle" : "", //已还本金 "pay_interest" : "", //已还利息 "past_due" : "", //当前逾期金额 "past_principle" : "", //当前逾期本金 "past_interest" : "", //当前逾期利息 "past_period" : "", //当前逾期期数 "history_past_period" : "", //历史逾期期数 "history_past_amount" : "", //历史逾期金额 "assure_style" : "", //担保方式 "house_type" : "", //购房类型 "debit_account" : "", //扣款账号 "left_period" : "" //剩余期数 }, "loan_detail" : [ { "id" : "924a6f5e-2256-4c64-bfc9-e13315173c8b", //GUID "record_date" : "2015-04-30", //发生日期 "op_type" : "个人贷款还款信息", //类型/摘要 "record_month" : "", //缴纳月份 "principle" : "872.47", //还款本金 "interest" : "1066.67", //利息 "base" : "1939.14", //还款本息 "balance" : "319127.53", //贷款余额 "bill_date" : "2015-04-30", //实际扣款日期 "warning_interest" : "", //罚息 "due_date" : "", //应还日期 "period" : "", //期数 "deposit_type" : "", //类型 "remark" : "个人贷款还款信息", //摘要 "comments" : "" //备注 }, ...... ] }, ...... ], 'general_analyzed_data': { 'every_company_data': [ { 'company':'某某公司', //公司名 "cont_last_times" : 0, //最近连续缴存 "back_cont_last_times" : 0, //最近连续缴存（含补缴） "cont_max_times" : 0, //连续缴存最多次数 "back_cont_max_times" : 0,//连续缴存最多次数（含补缴） "sum_times" : 0, //总共缴存次数 "back_sum_times" : 0, //总共缴存次数（含补缴） 'start_month':'201606',//此公司开始缴纳时间 'end_month':'201808',//此公司结束缴纳时间 }, ...... ], 'last_6months_pay_off': -1; //近6个月断缴月份数(以下字段-1均为无法计算) 'last_6months_back_pay_off': -1; //近6个月断缴月份数(含补缴) 'last_24months_sum_times': -1; //近24个月总共缴存次数 'last_24months_back_sum_times': -1; //近24个月总共缴存次数(含补缴) 'last_24months_company_quantity': -1;//近24个月缴存公司个数 'last_12months_has_extract': -1; //近12个月是否有提取（1为有提取，0为无提取） "overdueClassify": { "result": 0, "message": "", "data": { "mobile":"", //手机号 "imsi":"",//IMSI "imei":"",//IMEI "rcd":[ { "match_t":"", //匹配查询的类型(phone/imei/imsi) "match_v":"", //匹配查询的类型值 "match_id":"", //匹配查询到的类型值md5值 "recent_time": "",//最近一次逾期时间 "catlog":[ { "month3":{ //最近1到3个月记录 "bank_loan": { //银行贷款记录 "rcdrows": 3 , //逾期记录的条数 "orgno": 2 , //涉及机构数 "limitamount": "(1000,2000]", //最大逾期金额 "days":"15" //最长逾期天数 "daytime": "" //最长逾期天数的时间 }, "bank_credit":{ //银行信用卡记录,格式同bankLoan }, "third_loan":{ //非银机构贷款记录,格式同bankLoan }, "third_credit":{ //非银机构虚拟信用卡记录,格式同bankLoan } } }, { "mounth6":{ //最近4到6个月记录 } }, { "mounth9":{ //最近7到9个月记录 } }, { "mounth12":{ //最近10到12个月记录 } }, { "mounth24":{ //最近13到24个月记录 } } ] } ] } }, "loanClassify": { "result": 0, "message": null, "data": { "mobile": "13119820421", "imei": "", "imsi": "", "rcd": [ { "match_t": "phone", "match_v": "13119820421", "match_id": "ECC414087CB9C93BB8BBA33A971EF3D4", "catlog": [ { "month3": { "other": { "orgno": 1,//涉及机构数 "loan_amount": null,//贷款总金额 "total_amount": null,//月需还款总额 "repay_amount": null,//月需还款最大 金额 "recent_loan_time": null //最近一次贷款 时间点 }, "bankname": null } }, ...... ], "recent_repay_time": null //最新的一次还款成功时间点 } ] } }, "blacklist": { "result": 0, "message": null, "data": { "realname": "", //姓名 "idno": "", //身份证 "mobile": "", //手机号 "imsi": "imsi",//IMSI "imei": "imei",//IMEI "city_code": "",//地区编号 "others": [ { "org_overdue_days": "",//机构逾期期数 "bank_overdue_days": "",//银行逾期期数 "org_lawsuit": "",//机构诉讼 "bank_lawsuit": "",//银行诉讼 "org_1m_overdue": "", //开户30天有逾期 "org_contact": "2015-09-11 09:49:52",//机构失联 "bank_contact": "2015-08-23 11:23:50",//银行失联 "bad_overdue_time": "20160520",//最后一次严重逾期时间 "overdue_call_time": "20160524",//最后一次催收电话的呼叫时间 "org_balck_list": [ { "value":"", //机构名称(目前保留空值) "org_code":"000236", //机构编号 "imsi":"6B0C09D22693F8C2A57D39C218BE7900" //匹配的加密imsi } ], "match_t":"", //匹配查询的类型(phone/imei/imsi) "match_v":"", //匹配查询类型的值 "match_id":""//匹配查询到的imsi的md5值 } ] } }, } }
+9.3 公积金中心编号
+ 
+城市编号	公积金中心
+1	上海
+2	苏州(未注册)
+3	杭州
+4	西安
+5	西宁
+6	抚顺
+7	桂林
+8	玉林市
+9	长治
+10	济宁
+11	郑州
+13	大同
+14	成都
+15	兰州
+16	东莞
+17	遂宁
+19	湖州
+20	泰安
+21	厦门
+22	宁德
+23	宜春
+24	黔南州
+25	广州
+26	陕西省直
+27	衡阳
+28	咸阳
+29	九江
+30	深圳
+31	阿克苏
+32	驻马店
+33	镇江
+34	柳州
+35	乌鲁木齐
+36	邵阳
+37	聊城
+38	赣州
+39	苏州工业园区
+40	惠州
+41	大庆
+42	银川
+43	岳阳
+44	吉林市
+45	武汉
+46	运城
+47	海南省直
+48	承德
+49	沈阳
+50	湖南省直
+51	威海
+52	佛山
+53	德州
+54	唐山
+55	新乡
+56	连云港
+57	常州
+58	昆明
+59	大连
+60	通辽
+61	烟台
+62	晋中
+63	义乌
+64	长沙
+65	江苏省直
+66	潍坊
+67	宣城
+68	荆州
+69	毕节
+70	日照
+71	焦作
+73	河南省直
+74	湛江
+75	枣庄
+76	邯郸
+77	青岛
+78	贵阳
+79	徐州
+80	无锡
+81	邢台
+82	怀化
+83	郴州
+84	株洲
+85	自贡
+86	菏泽
+87	临汾
+88	江西省直
+90	晋城
+91	孝感
+92	濮阳
+93	黄石
+94	广元市
+95	益阳
+96	宜宾
+97	牡丹江
+98	济南
+99	邓州
+100	永州
+101	常德
+103	龙岩
+105	六安
+106	许昌
+108	广安
+109	福建省直
+110	延安
+111	十堰
+112	国管
+113	铜仁
+114	南平
+115	鹤岗
+116	玉溪
+118	南京
+119	沧州
+120	呼和浩特
+121	黔东南
+122	商丘
+123	东营
+124	抚州市
+125	滁州
+126	吉林省直
+127	金华
+128	滑县
+129	黄冈
+130	曲靖
+131	周口
+132	大理
+133	平顶山
+134	漯河
+135	巴中市
+136	漳州
+137	济源
+138	贵州省直
+139	南宁
+140	安阳
+141	广西省直
+142	南充
+143	资阳
+144	四川省直
+145	钦州
+146	芜湖
+147	莆田
+148	伊犁哈萨克
+149	包头
+150	黑龙江省直
+151	昭通
+152	淄博
+153	中山
+154	兴安盟
+155	萍乡
+177	梅州
+178	白山
+179	阿坝州
+180	吉安
+181	朝阳市
+182	齐齐哈尔
+183	莱芜
+184	恩施
+185	丽江
+197	榆林
+198	平凉
+199	延边
+200	酒泉
+202	丽水
+203	宿迁
+204	三门峡
+205	防城港
+206	湘潭
+207	鞍山
+208	铜川市
+209	攀枝花
+210	内蒙古
+211	铁岭市
+212	贵港
+213	昌吉州
+214	北海
+215	伊春市
+216	六盘水
+217	塔城
+218	红河州
+219	阳江
+220	蚌埠
+221	宿州市
+223	池州
+224	舟山
+225	新余
+227	黄山
+228	阿勒泰地区
+229	巴彦淖尔
+230	本溪
+231	呼伦贝尔
+232	嘉峪关
+233	安庆
+234	营口
+235	湘西州
+236	眉山市
+237	亳州市
+238	淮北市
+240	佳木斯
+241	东风公司
+242	楚雄
+243	吕梁
+245	山西省直
+246	保山
+247	贺州
+248	普洱市
+249	南宁铁路分中心
+250	江阴
+251	宜昌
+252	博尔塔拉蒙古自治州
+254	滨州
+255	浦江
+256	肇庆
+257	随州
+258	甘孜州
+259	四平
+260	马钢
+261	马鞍山
+262	娄底
+263	河北省直
+264	绵竹市
+265	张掖
+266	黑河
+267	辽宁省直
+268	仙桃
+269	江门
+270	铜陵
+271	乐山
+272	临沧
+273	德宏州
+274	德阳市
+275	旌阳区
+276	广汉市
+277	什邡市
+279	巴州
+280	罗江县
+281	遵义
+284	乌海市
+285	福州
+286	咸宁
+287	江都
+288	内江市
+289	温岭
+290	磐安
+291	长阳
+292	玉树州
+293	开化县
+294	红安县
+295	分宜县
+296	洛阳
+297	凉山
+298	衢州
+299	潮州
+300	鹤壁
+301	焦煤西山管理部
+302	焦煤霍州管理部
+303	台州市
+304	山西焦煤集团(本部)
+305	达州市
+306	罗田县
+307	梧州
+308	新会区
+309	海西州
+310	青田
+311	油田
+312	淮南
+313	台山市
+314	安徽省直
+315	洛阳铁路
+316	婺城区
+317	金台区
+318	崇左
+319	潜江
+320	格尔木市
+321	河源市
+322	通化
+323	固始县
+325	鄂州
+326	阜新
+327	椒江
+328	揭阳
+331	天门
+332	白银
+333	北京
+334	凤台
+335	天台
+336	韩城
+337	玉环
+338	宝鸡
+339	武穴
+340	兰溪
+341	景德镇
+342	焦煤汾西管理部
+343	开平市
+344	泸州
+345	盐城
+346	阳泉
+347	天津
+348	东阳
+349	天水
+350	长春
+351	上饶
+352	扬州
+353	石家庄
+354	泰州
+355	绍兴
+356	重庆
+357	合肥
+358	韶关
+359	石嘴山
+360	沙洋监狱
+361	宁波
+363	神农架
+365	淮南矿业
+366	黄南州
+367	果洛州
+368	海东市
+370	临沂
+371	温州
+372	三明
+373	浙江省直
+374	淮安
+375	海北州
+376	来宾
+377	荆门
+378	南通
+379	哈密
+380	青海省直(省中心)
+381	松原
+382	盘锦
+383	秭归
+384	哈尔滨
+385	鹤山
+386	安康
+388	朔州
+389	海南州
+390	秦皇岛
+394	苏州(已注册)
+395	安顺
+396	白城市
+397	汉中
+398	河池
+399	廊坊市
+400	衡水
+401	丹东
+402	百色
+404	嘉兴
+405	克拉玛依
+406	南阳
+407	嵊泗
+408	雅安
+409	阜阳市
+410	宁夏省直
+411	固原市
+412	太原
+414	商洛
+415	中江县
+416	鞍钢
+418	泉州
+419	珠海
+420	中卫市
+421	甘南州
+424	金东区
+425	郑州铁路
+426	鸡西
+427	赤峰
+428	南昌
+429	保定
+430	绥化
+431	渭南
+432	桐乡
+433	海盐县
+434	永康
+435	凤翔
+438	陈仓区
+440	沈阳铁路
+442	乌海
+443	绵阳
+445	武威
+447	甘肃省直
+
